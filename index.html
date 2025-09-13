@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kalkulyator</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <div class="container py-4">
+    <h1 class="text-center mb-4">Universal Kalkulyator</h1>
+
+    <!-- Matematika -->
+    <div class="card mb-3">
+      <div class="card-header">Matematika kalkulyatori</div>
+      <div class="card-body">
+        <input type="text" id="mathInput" class="form-control mb-2" placeholder="Masalan: 2+2*5">
+        <button class="btn btn-primary" onclick="calcMath()">Hisoblash</button>
+        <p class="mt-2">Natija: <span id="mathResult"></span></p>
+      </div>
+    </div>
+
+    <!-- Kredit -->
+    <div class="card mb-3">
+      <div class="card-header">Kredit kalkulyatori</div>
+      <div class="card-body">
+        <input type="number" id="loanAmount" class="form-control mb-2" placeholder="Kredit summasi">
+        <input type="number" id="loanMonths" class="form-control mb-2" placeholder="Oylar soni">
+        <input type="number" id="loanRate" class="form-control mb-2" placeholder="Yillik foiz (%)">
+        <button class="btn btn-success" onclick="calcLoan()">Hisoblash</button>
+        <p class="mt-2">Oylik to‘lov: <span id="loanResult"></span></p>
+      </div>
+    </div>
+
+    <!-- Kun/Oy/Yil -->
+    <div class="card mb-3">
+      <div class="card-header">Kun / Oy / Yil kalkulyatori</div>
+      <div class="card-body">
+        <input type="date" id="date1" class="form-control mb-2">
+        <input type="date" id="date2" class="form-control mb-2">
+        <button class="btn btn-warning" onclick="calcDate()">Hisoblash</button>
+        <p class="mt-2">Farq: <span id="dateResult"></span></p>
+      </div>
+    </div>
+
+    <!-- Valyuta -->
+    <div class="card mb-3">
+      <div class="card-header">Valyuta konvertori</div>
+      <div class="card-body">
+        <div class="row g-2">
+          <div class="col-md-6">
+            <input type="number" id="currencyInput" class="form-control" placeholder="Miqdor">
+          </div>
+          <div class="col-md-6">
+            <select id="currencyType" class="form-select">
+              <option value="USD">USD (AQSh dollari)</option>
+              <option value="EUR">EUR (Yevro)</option>
+              <option value="RUB">RUB (Rossiya rubli)</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-info mt-2" onclick="getCurrency()">So‘mga o‘tkazish</button>
+        <p class="mt-2">Natija: <span id="currencyResult"></span></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Matematika
+    function calcMath() {
+      try {
+        let expr = document.getElementById("mathInput").value;
+        let res = eval(expr);
+        document.getElementById("mathResult").innerText = res;
+      } catch {
+        document.getElementById("mathResult").innerText = "Xato!";
+      }
+    }
+
+    // Kredit
+    function calcLoan() {
+      let amount = parseFloat(document.getElementById("loanAmount").value);
+      let months = parseInt(document.getElementById("loanMonths").value);
+      let rate = parseFloat(document.getElementById("loanRate").value) / 100 / 12;
+      if (isNaN(amount) || isNaN(months) || isNaN(rate)) {
+        document.getElementById("loanResult").innerText = "Ma'lumotni to‘liq kiriting!";
+        return;
+      }
+      let annuity = amount * rate / (1 - Math.pow(1 + rate, -months));
+      document.getElementById("loanResult").innerText = annuity.toFixed(2) + " so‘m";
+    }
+
+    // Kun / Oy / Yil
+    function calcDate() {
+      let d1 = new Date(document.getElementById("date1").value);
+      let d2 = new Date(document.getElementById("date2").value);
+      if (!d1 || !d2) {
+        document.getElementById("dateResult").innerText = "Sanalarni tanlang!";
+        return;
+      }
+      let diff = Math.abs(d2 - d1);
+      let days = diff / (1000 * 60 * 60 * 24);
+      let years = days / 365;
+      let months = days / 30;
+      document.getElementById("dateResult").innerText = 
+        days.toFixed(0) + " kun (~" + months.toFixed(1) + " oy, " + years.toFixed(1) + " yil)";
+    }
+
+    // Valyuta
+    async function getCurrency() {
+      let amount = parseFloat(document.getElementById("currencyInput").value);
+      let type = document.getElementById("currencyType").value;
+      if (isNaN(amount)) {
+        document.getElementById("currencyResult").innerText = "Miqdor kiriting!";
+        return;
+      }
+      try {
+        let res = await fetch("https://cbu.uz/uz/arkhiv-kursov-valyut/json/");
+        let data = await res.json();
+        let rateObj = data.find(c => c.Ccy === type);
+        if (!rateObj) {
+          document.getElementById("currencyResult").innerText = "Valyuta topilmadi!";
+          return;
+        }
+        let sum = amount * parseFloat(rateObj.Rate);
+        document.getElementById("currencyResult").innerText =
+          sum.toFixed(2) + " so‘m (1 " + type + " = " + rateObj.Rate + ")";
+      } catch {
+        document.getElementById("currencyResult").innerText = "API dan ma'lumot olinmadi!";
+      }
+    }
+  </script>
+</body>
+</html>
